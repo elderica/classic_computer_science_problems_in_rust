@@ -30,10 +30,11 @@ where
     fn successors(&self, s: &State) -> Vec<State>;
 
     fn dfs(&self) -> Option<Vec<State>> {
-        let mut visited: HashSet<State> = HashSet::new();
         let mut history: Vec<State> = Vec::new();
         let mut stack: VecDeque<State> = VecDeque::new();
         stack.push_back(self.initial());
+        let mut visited: HashSet<State> = HashSet::new();
+        visited.insert(self.initial());
 
         while let Some(current_state) = stack.pop_back() {
             history.push(current_state.clone());
@@ -53,10 +54,11 @@ where
     }
 
     fn bfs(&self) -> Option<Vec<State>> {
-        let mut visited: HashSet<State> = HashSet::new();
         let mut history: Vec<State> = Vec::new();
         let mut queue: VecDeque<State> = VecDeque::new();
         queue.push_back(self.initial());
+        let mut visited: HashSet<State> = HashSet::new();
+        visited.insert(self.initial());
 
         while let Some(current_state) = queue.pop_front() {
             history.push(current_state.clone());

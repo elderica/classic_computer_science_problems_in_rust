@@ -93,9 +93,19 @@ impl Maze {
     // }
 }
 
+fn randomly_fill(grid: &mut [Vec<Cell>], sparseness: f64) {
+    for row in grid.iter_mut() {
+        for cell in row.iter_mut() {
+            if random::<f64>() < sparseness {
+                *cell = Cell::Blocked;
+            }
+        }
+    }
+}
+
 impl Searchable<MazeLocation> for Maze {
     fn initial(&self) -> MazeLocation {
-        MazeLocation { row: 0, column: 0 }
+        self.start.clone()
     }
 
     fn is_goal(&self, ml: &MazeLocation) -> bool {
@@ -127,16 +137,6 @@ impl Searchable<MazeLocation> for Maze {
     }
 }
 
-fn randomly_fill(grid: &mut [Vec<Cell>], sparseness: f64) {
-    for row in grid.iter_mut() {
-        for cell in row.iter_mut() {
-            if random::<f64>() < sparseness {
-                *cell = Cell::Blocked;
-            }
-        }
-    }
-}
-
 impl Display for Maze {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let grid = &self.grid;
@@ -162,10 +162,10 @@ impl MazeLocation {
 }
 
 fn main() {
-    println!("----------------------------------------------------");
+    println!("====================================================");
     let mut m1 = Maze::new();
     println!("{}", m1);
-    println!("====================================================");
+    println!("----------------------------------------------------");
     if let Some(solution1) = m1.dfs() {
         m1.mark(&solution1);
         println!("{}", m1);
@@ -173,16 +173,16 @@ fn main() {
     } else {
         println!("No solution found using depth-first search!")
     }
-    println!("----------------------------------------------------");
+    println!("====================================================");
     let mut m2 = Maze::new();
     println!("{}", m2);
-    println!("====================================================");
-    if let Some(solution1) = m2.bfs() {
-        m2.mark(&solution1);
-        println!("{}", m2);
-        m2.clear(&solution1);
-    } else {
-        println!("No solution found using depth-first search!")
-    }
     println!("----------------------------------------------------");
+    if let Some(solution2) = m2.bfs() {
+        m2.mark(&solution2);
+        println!("{}", m2);
+        m2.clear(&solution2);
+    } else {
+        println!("No solution found using breadth-first search!")
+    }
+    println!("====================================================");
 }
