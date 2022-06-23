@@ -114,25 +114,24 @@ impl Searchable<MazeLocation> for Maze {
 
     fn successors(&self, ml: &MazeLocation) -> Vec<MazeLocation> {
         let mut locations = Vec::new();
-        let grid = &self.grid;
-        let rows = self.rows;
-        let columns = self.columns;
-
-        if ml.row + 1 < rows && grid[(ml.row + 1) as usize][ml.column as usize] != Cell::Blocked {
-            locations.push(MazeLocation::new(ml.row + 1, ml.column));
-        }
-        if ml.row > 0 && grid[(ml.row - 1) as usize][ml.column as usize] != Cell::Blocked {
-            locations.push(MazeLocation::new(ml.row - 1, ml.column));
-        }
-        if ml.column + 1 < columns
-            && grid[ml.row as usize][(ml.column + 1) as usize] != Cell::Blocked
+        if ml.column + 1 < self.columns
+            && self.grid[ml.row as usize][(ml.column + 1) as usize] != Cell::Blocked
         {
             locations.push(MazeLocation::new(ml.row, ml.column + 1));
         }
-        if ml.column > 0 && grid[ml.row as usize][(ml.column - 1) as usize] != Cell::Blocked {
+        if ml.column >= 1 && self.grid[ml.row as usize][(ml.column - 1) as usize] != Cell::Blocked {
             locations.push(MazeLocation::new(ml.row, ml.column - 1));
         }
+        if ml.row + 1 < self.rows
+            && self.grid[(ml.row + 1) as usize][ml.column as usize] != Cell::Blocked
+        {
+            locations.push(MazeLocation::new(ml.row + 1, ml.column));
+        }
+        if ml.row >= 1 && self.grid[(ml.row - 1) as usize][ml.column as usize] != Cell::Blocked {
+            locations.push(MazeLocation::new(ml.row - 1, ml.column));
+        }
 
+        println!("{:?}", locations);
         locations
     }
 }
@@ -185,4 +184,40 @@ fn main() {
         println!("No solution found using breadth-first search!")
     }
     println!("====================================================");
+
+    let mut m3 = Maze {
+        rows: 10,
+        columns: 10,
+        start: MazeLocation { row: 0, column: 0 },
+        goal: MazeLocation { row: 9, column: 9 },
+        grid: vec![vec![Cell::Empty; 10]; 10],
+    };
+    m3.grid[0][0] = Cell::Start;
+    m3.grid[9][9] = Cell::Goal;
+    let ls = vec![
+        (0, 5),
+        (0, 7),
+        (1, 1),
+        (2, 7),
+        (3, 1),
+        (3, 2),
+        (3, 9),
+        (4, 2),
+        (5, 2),
+        (5, 5),
+        (6, 1),
+        (8, 6),
+        (8, 9),
+    ];
+    for l in ls {
+        m3.grid[l.0][l.1] = Cell::Blocked;
+    }
+    println!("{}", m3);
+    println!("{:?}", m3.successors(&m3.start));
+    println!("----------------------------------------------------");
+    if let Some(solution3) = m3.dfs() {
+        m3.mark(&solution3);
+        println!("{}", m3);
+        m3.clear(&solution3);
+    }
 }

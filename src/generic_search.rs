@@ -1,7 +1,6 @@
 use std::{
     cmp::Ordering,
     collections::{HashSet, VecDeque},
-    fmt::Debug,
     hash::Hash,
 };
 
@@ -23,7 +22,7 @@ where
 
 pub trait Searchable<State>
 where
-    State: Clone + Hash + Eq + Debug,
+    State: Clone + Hash + Eq,
 {
     fn initial(&self) -> State;
     fn is_goal(&self, s: &State) -> bool;
@@ -34,7 +33,6 @@ where
         let mut stack: VecDeque<State> = VecDeque::new();
         stack.push_back(self.initial());
         let mut visited: HashSet<State> = HashSet::new();
-        visited.insert(self.initial());
 
         while let Some(current_state) = stack.pop_back() {
             history.push(current_state.clone());
@@ -43,7 +41,7 @@ where
                 return Some(history);
             }
 
-            for successor in self.successors(&current_state).into_iter() {
+            for successor in self.successors(&current_state).into_iter().rev() {
                 if visited.insert(successor.clone()) {
                     stack.push_back(successor);
                 }
@@ -78,80 +76,103 @@ where
     }
 }
 
-// pub struct Node<T>
-// where
-//     T: Clone + Hash + Eq,
-// {
-//     state: T,
-//     cost: f64,
-//     heuristic: f64,
-// }
+#[cfg(test)]
+mod tests {
+    use std::vec;
 
-// impl<T> Node<T>
-// where
-//     T: Clone + Hash + Eq,
-// {
-//     fn new(state: T) -> Self {
-//         Self {
-//             state,
-//             cost: 0.0,
-//             heuristic: 0.0,
-//         }
-//     }
+    use super::*;
 
-//     fn new_with_cost(state: T, cost: f64, heuristic: f64) -> Self {
-//         Self {
-//             state,
-//             cost,
-//             heuristic,
-//         }
-//     }
-// }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    struct Tree {
+        parent_of: Vec<usize>,
+        child_of: Vec<Vec<usize>>,
+        goal: usize,
+    }
 
-// impl<T> PartialEq for Node<T>
-// where
-//     T: Clone + Hash + Eq,
-// {
-//     fn eq(&self, other: &Self) -> bool {
-//         let mine = self.cost + self.heuristic;
-//         let theirs = other.cost + other.heuristic;
-//         mine.eq(&theirs)
-//     }
-// }
+    impl Searchable<usize> for Tree {
+        fn initial(&self) -> usize {
+            0
+        }
 
-// impl<T> PartialOrd for Node<T>
-// where
-//     T: Clone + Hash + Eq,
-// {
-//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-//         let mine = self.cost + self.heuristic;
-//         let theirs = other.cost + other.heuristic;
-//         mine.partial_cmp(&theirs)
-//     }
-// }
+        fn is_goal(&self, s: &usize) -> bool {
+            *s == self.goal
+        }
 
-// pub fn dfs<T>(initial: T, goal_test: fn(&T) -> bool, successors: fn(&T) -> Vec<T>) -> Option<Vec<T>>
-// where
-//     T: Clone + Hash + Eq,
-// {
-//     let mut visited: HashSet<T> = HashSet::new();
-//     let mut history: Vec<T> = Vec::new();
-//     let mut stack: VecDeque<T> = VecDeque::new();
-//     stack.push_back(initial);
+        fn successors(&self, s: &usize) -> Vec<usize> {
+            self.child_of[*s].clone()
+        }
+    }
+    #[test]
+    fn tree1_dfs() {
+        //       0
+        //   1       2
+        // 3   4      5
+        //6 7   8   9  10
+        let t = Tree {
+            parent_of: vec![0, 0, 0, 1, 1, 2, 3, 3, 4, 5, 5],
+            child_of: vec![
+                vec![1, 2],
+                vec![3, 4],
+                vec![5],
+                vec![6, 7],
+                vec![8],
+                vec![9, 10],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+            ],
+            goal: 10,
+        };
 
-//     while let Some(current_state) = stack.pop_back() {
-//         history.push(current_state.clone());
+        let h = t.dfs();
+        assert_eq!(h, Some(vec![0, 1, 3, 6, 7, 4, 8, 2, 5, 9, 10]));
+    }
 
-//         if goal_test(&current_state) {
-//             return Some(history);
-//         }
+    #[test]
+    fn tree1_bfs() {
+        //       0
+        //   1       2
+        // 3   4      5
+        //6 7   8   9  10
+        let t = Tree {
+            parent_of: vec![0, 0, 0, 1, 1, 2, 3, 3, 4, 5, 5],
+            child_of: vec![
+                vec![1, 2],
+                vec![3, 4],
+                vec![5],
+                vec![6, 7],
+                vec![8],
+                vec![9, 10],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+            ],
+            goal: 10,
+        };
+        let h = t.bfs();
+        assert_eq!(h, Some(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
+    }
 
-//         for succ in successors(&current_state).into_iter() {
-//             if visited.insert(succ.clone()) {
-//                 stack.push_back(succ);
-//             }
-//         }
-//     }
-
-//     None
-// }
+    #[test]
+    fn tree2_dfs() {
+        let t = Tree {
+            parent_of: vec![0, 0, 0, 1, 1, 2, 2],
+            child_of: vec![
+                vec![1, 2],
+                vec![3, 4],
+                vec![5, 6],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+            ],
+            goal: 6,
+        };
+        let h = t.dfs();
+        assert_eq!(h, Some(vec![0, 1, 3, 4, 2, 5, 6]))
+    }
+}
